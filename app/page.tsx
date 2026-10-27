@@ -7,7 +7,6 @@ import Topbar from './components/Topbar';
 const RegistrationModal = dynamic(() => import('./components/RegistrationModal'), { ssr: false });
 
 const STORAGE_KEY_EMAIL = 'cnt_pulse_my_email_2026_aha';
-const STORAGE_KEY_REGS = 'cnt_pulse_regs_2026_aha';
 
 // ── Single source of truth for event details ──
 export const EVENT_INFO = {
@@ -19,24 +18,19 @@ export const EVENT_INFO = {
   audience: 'CNT Employees and Management',
 };
 
-interface Registration {
-  id: string;
-  email: string;
-}
-
 export default function EventRegistrationPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'register' | 'view'>('register');
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const myEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
-      if (!myEmail) return;
-      const regs: Registration[] = JSON.parse(localStorage.getItem(STORAGE_KEY_REGS) || '[]');
-      const found = regs.find(r => r.email.toLowerCase() === myEmail.toLowerCase());
-      if (found) setRegisteredEmail(myEmail);
-    } catch { /* ignore */ }
+    const myEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
+    if (!myEmail) return;
+    // Verify against DB — don't trust localStorage alone
+    fetch(`/api/registrations?email=${encodeURIComponent(myEmail)}`)
+      .then(r => r.json())
+      .then(data => { if (data.found) setRegisteredEmail(myEmail); })
+      .catch(() => { /* ignore */ });
   }, []);
 
   function openRegister() {

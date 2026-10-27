@@ -5,13 +5,12 @@ import { QRCodeSVG } from 'qrcode.react';
 
 const EVENT_DATA = {
   id: 'CNT-EVT-2026-AHA',
-  title: 'Go Beyond! Driving Growth Through Digital Transformation',
-  date: 'May 14, 2026',
-  time: '1:00 PM – 2:00 PM',
-  venue: 'Hall 2 and Hall 3',
+  title: 'Official Launch of Pulse 2.0 & the New CNT Official Website',
+  date: 'October 28, 2026',
+  time: '5:00 PM',
+  venue: '7th Floor',
 };
 
-const STORAGE_KEY_REGS = 'cnt_pulse_regs_2026_aha';
 const STORAGE_KEY_EMAIL = 'cnt_pulse_my_email_2026_aha';
 
 export interface Registration {
@@ -46,18 +45,16 @@ function genId(): string {
   return 'CNT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
 }
 
-function loadRegistrations(): Registration[] {
+async function lookupRegistrationByEmail(email: string): Promise<Registration | null> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY_REGS) || '[]');
+    const res = await fetch(`/api/registrations?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.found) return null;
+    return data.record as Registration;
   } catch {
-    return [];
+    return null;
   }
-}
-
-function saveRegistrations(regs: Registration[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY_REGS, JSON.stringify(regs));
-  } catch { /* ignore */ }
 }
 
 export default function RegistrationModal({ mode, onClose, onRegistered }: Props) {
@@ -71,6 +68,7 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
   const [qrEntry, setQrEntry] = useState<Registration | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
 
   const modalTitle = {
     step1: 'Registration',
@@ -79,21 +77,25 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
     qr: isNew ? 'Registration Confirmed' : 'Your QR Code',
   }[screen];
 
-  // Check if already registered when opening in view mode
+  // Check if already registered when opening in view mode — look up from DB
   useEffect(() => {
     if (mode === 'view') {
       const myEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
       if (myEmail) {
-        const regs = loadRegistrations();
-        const found = regs.find(r => r.email.toLowerCase() === myEmail.toLowerCase());
-        if (found) {
-          setQrEntry(found);
-          setIsNew(false);
-          setScreen('qr');
-          return;
-        }
+        setIsLookingUp(true);
+        lookupRegistrationByEmail(myEmail).then(found => {
+          setIsLookingUp(false);
+          if (found) {
+            setQrEntry(found);
+            setIsNew(false);
+            setScreen('qr');
+          } else {
+            setScreen('lookup');
+          }
+        });
+      } else {
+        setScreen('lookup');
       }
-      setScreen('lookup');
     }
   }, [mode]);
 
@@ -149,8 +151,8 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
       return;
     }
 
-    const regs = loadRegistrations();
-    const existing = regs.find(r => r.email.toLowerCase() === email.toLowerCase());
+    // Check if already registered in DB
+    const existing = await lookupRegistrationByEmail(email);
     if (existing) {
       try { localStorage.setItem(STORAGE_KEY_EMAIL, email); } catch { /* ignore */ }
       onRegistered(email);
@@ -161,6 +163,7 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
       setScreen('qr');
       return;
     }
+
     const entry: Registration = {
       id: genId(),
       eventId: EVENT_DATA.id,
@@ -172,13 +175,10 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
       tickets: 1,
       registeredAt: new Date().toISOString(),
     };
-    regs.push(entry);
-    saveRegistrations(regs);
-    try { localStorage.setItem(STORAGE_KEY_EMAIL, email); } catch { /* ignore */ }
 
-    // Also save to server for admin visibility
+    // Save to server (source of truth)
     try {
-      await fetch('/api/registrations', {
+      const res = await fetch('/api/registrations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -190,8 +190,29 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
           businessUnit: entry.role,
         }),
       });
-    } catch { /* ignore — local registration still works */ }
+      if (res.ok) {
+        const data = await res.json();
+        // Use the record returned by the server (handles race-condition duplicates)
+        if (data.duplicate) {
+          const serverRecord: Registration = {
+            ...data.record,
+            role: data.record.businessUnit,
+            eventId: EVENT_DATA.id,
+            tickets: 1,
+          };
+          try { localStorage.setItem(STORAGE_KEY_EMAIL, email); } catch { /* ignore */ }
+          onRegistered(email);
+          setQrEntry(serverRecord);
+          setIsNew(false);
+          setAlreadyRegistered(true);
+          setIsSubmitting(false);
+          setScreen('qr');
+          return;
+        }
+      }
+    } catch { /* ignore — fall through to show QR anyway */ }
 
+    try { localStorage.setItem(STORAGE_KEY_EMAIL, email); } catch { /* ignore */ }
     onRegistered(email);
     setQrEntry(entry);
     setIsNew(true);
@@ -199,14 +220,16 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
     setScreen('qr');
   }
 
-  function lookupByEmail() {
+  async function lookupByEmail() {
     setLookupError(false);
-    if (!lookupEmail.trim()) { setLookupError(true); return; }
-    const regs = loadRegistrations();
-    const found = regs.find(r => r.email.toLowerCase() === lookupEmail.trim().toLowerCase());
+    const email = lookupEmail.trim();
+    if (!email) { setLookupError(true); return; }
+    setIsLookingUp(true);
+    const found = await lookupRegistrationByEmail(email);
+    setIsLookingUp(false);
     if (!found) { setLookupError(true); return; }
-    try { localStorage.setItem(STORAGE_KEY_EMAIL, lookupEmail.trim()); } catch { /* ignore */ }
-    onRegistered(lookupEmail.trim());
+    try { localStorage.setItem(STORAGE_KEY_EMAIL, email); } catch { /* ignore */ }
+    onRegistered(email);
     setQrEntry(found);
     setIsNew(false);
     setScreen('qr');
@@ -254,13 +277,13 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
                 <div className="step-dot" />
               </div>
               <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
-                Confirm your registration for the Go Beyond! event on May 14, 2026.
+                Confirm your registration for the Official Launch of Pulse 2.0 &amp; the New CNT Official Website on October 28, 2026.
               </p>
               <div className="ticket-row">
                 <div>
                   <p className="ticket-name">Employee Attendance Pass</p>
                   <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, fontFamily: "'DM Mono', monospace" }}>
-                    All-Hands Assembly · May 14, 2026
+                    Official Launch Event · October 28, 2026
                   </p>
                 </div>
                 <span className="ticket-badge">INTERNAL</span>
@@ -358,8 +381,15 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
           </>
         )}
 
+        {/* Loading screen for view mode DB lookup */}
+        {screen === 'lookup' && isLookingUp && (
+          <div className="lookup-screen">
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: 'var(--muted)' }}>// Checking registration…</p>
+          </div>
+        )}
+
         {/* Lookup */}
-        {screen === 'lookup' && (
+        {screen === 'lookup' && !isLookingUp && (
           <div className="lookup-screen">
             <p>Enter your CNT work email to retrieve your existing QR code for check-in.</p>
             <div className="form-group">
@@ -375,7 +405,9 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
               <div className="lookup-error">// No registration found for that email.</div>
             )}
             <div className="lookup-divider"><span>——</span></div>
-            <button className="btn-full" onClick={lookupByEmail}>Retrieve My QR Code</button>
+            <button className="btn-full" onClick={lookupByEmail} disabled={isLookingUp}>
+              {isLookingUp ? '// Checking…' : 'Retrieve My QR Code'}
+            </button>
             <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 14, fontFamily: "'DM Mono', monospace" }}>
               Not yet registered?{' '}
               <button
@@ -420,7 +452,7 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
               <p>{qrEntry.email}</p>
               <p>{qrEntry.birthday ? `Birthday: ${qrEntry.birthday}` : ''}</p>
               <p>{qrEntry.department} · {qrEntry.role}</p>
-              <span className="attendee-event-tag">{EVENT_DATA.title}</span>
+              <span className="attendee-event-tag">Official Launch · Pulse 2.0 &amp; CNT Website · Oct 28, 2026</span>
             </div>
             <button className="btn-full" onClick={onClose}>Close</button>
           </div>

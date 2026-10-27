@@ -14,8 +14,22 @@ export interface RegistrationRecord {
   registeredAt: string;
 }
 
-// GET — list all registrations (admin only)
-export async function GET() {
+// GET — list all (admin) or lookup by email (public)
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const emailParam = searchParams.get('email');
+
+  // Public email lookup — no auth required
+  if (emailParam) {
+    const row = await getByEmail(emailParam);
+    if (!row) return NextResponse.json({ found: false });
+    return NextResponse.json({
+      found: true,
+      record: { ...row, registeredAt: row.registeredAt.toISOString() },
+    });
+  }
+
+  // Admin-only full list
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -35,6 +49,18 @@ export async function GET() {
   }));
 
   return NextResponse.json(records);
+}
+
+// GET-by-email — public lookup (used by the registration modal)
+// Usage: GET /api/registrations?email=foo@bar.com
+async function getByEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const rows = await db
+    .select()
+    .from(registrations)
+    .where(ilike(registrations.email, normalizedEmail))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 // POST — save a new registration (public, called on form submit)
