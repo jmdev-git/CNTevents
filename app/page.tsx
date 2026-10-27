@@ -7,6 +7,8 @@ import Topbar from './components/Topbar';
 const RegistrationModal = dynamic(() => import('./components/RegistrationModal'), { ssr: false });
 
 const STORAGE_KEY_EMAIL = 'cnt_pulse_my_email_2026_aha';
+const STORAGE_VERSION_KEY = 'cnt_pulse_storage_version';
+const STORAGE_VERSION = 'v2'; // bump this any time you want to force-clear all users
 
 // ── Single source of truth for event details ──
 export const EVENT_INFO = {
@@ -24,6 +26,14 @@ export default function EventRegistrationPage() {
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    // Force-clear old localStorage if version doesn't match
+    try {
+      if (localStorage.getItem(STORAGE_VERSION_KEY) !== STORAGE_VERSION) {
+        localStorage.clear();
+        localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
+      }
+    } catch { /* ignore */ }
+
     const myEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
     if (!myEmail) return;
     // Verify against DB — don't trust localStorage alone

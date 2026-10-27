@@ -14,6 +14,7 @@ const BUSINESS_UNITS = [
   'LYFE Land',
   'Frontier',
   'Synergy',
+  'Framoto Philippines Inc.',
 ];
 
 interface RegistrationRecord {

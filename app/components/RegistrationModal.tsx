@@ -365,6 +365,7 @@ export default function RegistrationModal({ mode, onClose, onRegistered }: Props
                     <option>LYFE Land</option>
                     <option>Frontier</option>
                     <option>Synergy</option>
+                    <option>Framoto Philippines Inc.</option>
                   </select>
                 </div>
               </div>
