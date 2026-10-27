@@ -11,11 +11,11 @@ const STORAGE_KEY_REGS = 'cnt_pulse_regs_2026_aha';
 
 // ── Single source of truth for event details ──
 export const EVENT_INFO = {
-  title: 'Go Beyond! Driving Growth Through Digital Transformation',
-  date: 'May 14, 2026',
-  dateShort: 'May 14, 2026 · 1:00 PM — 2:00 PM',
-  time: '1:00 PM – 2:00 PM',
-  venue: 'Hall 2 and Hall 3',
+  title: 'Official Launch of Pulse 2.0 & the New CNT Official Website',
+  date: 'October 28, 2026',
+  dateShort: 'October 28, 2026 · 5:00 PM',
+  time: '5:00 PM',
+  venue: '7th Floor',
   audience: 'CNT Employees and Management',
 };
 
@@ -66,11 +66,10 @@ export default function EventRegistrationPage() {
         <div className="hero-grid-bg" aria-hidden="true" />
         <div className="hero-inner">
           <div>
-            <div className="event-type-pill">Live Corporate Event</div>
-            <h1>Go Beyond: Driving <span> Growth</span><br /> Through<span> Digital Transformation</span></h1>
+            <div className="event-type-pill">Official Launch Event</div>
+            <h1>Official Launch of<br /><span>Pulse 2.0</span> &amp; the New<br /><span>CNT Official Website</span></h1>
             <p className="hero-subtitle">
-              An internal corporate event marking a key milestone in CNT&apos;s transformation journey —
-              built to support how we grow next.
+              One connected workplace. A new digital front door for CNT.
             </p>
             <div className="hero-meta">
               <div className="hero-meta-item">
@@ -108,38 +107,30 @@ export default function EventRegistrationPage() {
         <div>
           <p className="section-eyebrow">About This Event</p>
           <p className="about-text">
-            CNT is entering a new phase of digital evolution.
+            Energy. Movement. Progress.
           </p>
           <p className="about-text">
-            As we continue to grow, so does the complexity of how we work — from data, communication,
-            support, and collaboration. While progress has been strong, one thing is clear: we need a
-            more connected and unified digital foundation.
+            CNT is taking its next big step in digital transformation, and this time we&apos;re launching two things together.
           </p>
           <p className="about-text">
-            This internal event marks a key milestone in CNT&apos;s transformation journey.
+            <strong>Pulse 2.0</strong> is the next version of CNT&apos;s digital workspace. It&apos;s built around our people and teams,
+            and it brings communication, collaboration, and day-to-day work into one connected workplace.
           </p>
           <p className="about-text">
-            It will highlight a strategic shift toward a more integrated way of working — designed to
-            improve efficiency, strengthen collaboration, and support faster, clearer execution across
-            the organization.
+            Also launching: <strong>The New CNT Official Website</strong>, a fresh face for CNT that tells our story and carries our
+            mission of &ldquo;A Million Jobs for a Million Filipinos&rdquo; to clients, partners, and future team members.
           </p>
           <p className="about-text">
-            Instead of disconnected systems, CNT is moving toward a more aligned digital ecosystem
-            that brings everything together in one direction.
+            This event is our official launch of both platforms. Join us as we introduce what&apos;s new, walk through the
+            experience, and mark a milestone in how CNT works, connects, and grows as one organization.
           </p>
           <blockquote className="highlight-quote">
-            This is not just an upgrade in tools — it is a shift in how CNT works as one organization.
+            People. Teams. Growth.<br />
+            One connected workplace.<br />
+            One stronger, more unified CNT.
           </blockquote>
-          <p className="about-text">
-            A more connected workforce.<br />
-            A more streamlined way of working.<br />
-            A stronger, more unified CNT.
-          </p>
-          <p className="about-text">
-            Something new is coming — built to support how we grow next.
-          </p>
           <p className="about-text" style={{ marginTop: 8 }}>
-            Stay tuned. CNT is moving forward. 🚀
+            Connect. Collaborate. Achieve. See you there. 🚀
           </p>
         </div>
 
@@ -204,8 +195,8 @@ export default function EventRegistrationPage() {
           </div>
 
           <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--white)', borderRadius: 8, border: '0.5px solid var(--border)', fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
-            <strong style={{ display: 'block', color: 'var(--ink)', marginBottom: 3, fontSize: 13 }}>QR Check-in System</strong>
-            Your QR code will be scanned at the event entrance. Present it on your phone or as a printout. Powered by CNT Pulse.
+            <strong style={{ display: 'block', color: 'var(--ink)', marginBottom: 3, fontSize: 13 }}>QR Notice</strong>
+            Your QR code will be scanned at the event entrance. Present it on your phone or as a printout. Powered by CNT Pulse 2.0.
           </div>
         </div>
       </div>

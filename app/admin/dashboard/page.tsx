@@ -264,10 +264,10 @@ export default function DashboardPage() {
               Attendance Dashboard
             </p>
             <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: '0.04em', color: 'var(--ink)', lineHeight: 1 }}>
-              Go Beyond! Driving Growth Through Digital Transformation
+              Official Launch of Pulse 2.0 &amp; the New CNT Official Website
             </h1>
             <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, fontFamily: "'DM Mono', monospace" }}>
-              May 14, 2026 · Hall 2 and Hall 3
+              October 28, 2026 · 5:00 PM · 7th Floor
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
